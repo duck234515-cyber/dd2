@@ -11,7 +11,7 @@ async function loadData() {
     }
 }
 
-// 개선된 검색 로직
+// 검색 로직
 function performSearch() {
     const searchInput = document.getElementById('searchInput');
     const query = searchInput.value.trim().toUpperCase();
@@ -20,7 +20,7 @@ function performSearch() {
     let targetBuilding = null;
     let targetFloor = null;
 
-    // 1. 건물 식별 (이름이 긴 건물부터 우선 매칭하여 오차 방지)
+    // 1. 건물 식별
     const sortedBuildings = [...buildingData.buildings].sort((a, b) => b.name.length - a.name.length);
     
     for (const b of sortedBuildings) {
@@ -30,7 +30,6 @@ function performSearch() {
         }
     }
 
-    // 건물명 없이 숫자만 친 경우 (예: "201") 기본값으로 '본관' 설정
     if (!targetBuilding && /^\d+/.test(query)) {
         targetBuilding = buildingData.buildings[0]; 
     }
@@ -40,9 +39,9 @@ function performSearch() {
         return;
     }
 
-    // 2. 층/호실 식별 (정규표현식 보강)
-    const roomMatch = query.match(/(\d{3,4})/); // 201, 1205 등 3~4자리 숫자
-    const floorMatch = query.match(/(\d+)\s*(층|F)/i); // 2층, 3F 등
+    // 2. 층/호실 식별
+    const roomMatch = query.match(/(\d{3,4})/);
+    const floorMatch = query.match(/(\d+)\s*(층|F)/i);
     const basementMatch = query.includes('지하') || query.includes('B');
 
     if (basementMatch) {
@@ -51,11 +50,9 @@ function performSearch() {
         targetFloor = floorMatch[1];
     } else if (roomMatch) {
         const roomNum = roomMatch[1];
-        // 3자리면 첫 번째 숫자(201->2), 4자리면 앞의 두 숫자(1201->12)를 층으로 인식
         targetFloor = roomNum.length === 3 ? roomNum[0] : roomNum.substring(0, 2);
     }
 
-    // 층 정보가 없으면 기본 1층 표시
     if (!targetFloor) targetFloor = "1";
 
     // 3. 도면 페이지 매칭
@@ -80,7 +77,18 @@ function displayMap(building, floor, pageId) {
     document.getElementById('floorInfo').innerText = `${floor}층 (Page ${pageId})`;
     
     const img = document.getElementById('planImage');
-    img.src = `assets/plans/page_${pageId}.png`; // 이미지 경로
+    
+    // 이미지 로드 실패 시 재시도 로직 추가 (확장자 대소문자 대응)
+    const basePath = `assets/plans/page_${pageId}`;
+    img.src = `${basePath}.png`; 
+    
+    img.onerror = function() {
+        if (this.src.endsWith('.png')) {
+            this.src = `${basePath}.PNG`; // 소문자 안되면 대문자로 시도
+        } else if (this.src.endsWith('.PNG')) {
+            this.src = `${basePath}.jpg`; // 대문자 안되면 jpg로 시도
+        }
+    };
     
     currentZoom = 1;
     updateZoom();
