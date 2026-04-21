@@ -1,9 +1,11 @@
 let buildingData = null;
-let currentZoom = 1;
 
-// 구글 지도식 좌표 변수
+// 이미지 이동 및 확대 상태
+let currentZoom = 1;
 let translateX = 0;
 let translateY = 0;
+
+// 드래그 관련 변수
 let isDragging = false;
 let startX, startY;
 
@@ -73,72 +75,73 @@ function displayMap(building, floor, pageId) {
     const img = document.getElementById('planImage');
     img.src = `assets/plans/page_${pageId}.png`;
     
+    // 이미지가 로드될 때 모든 설정 초기화 (정중앙 위치)
     img.onload = () => {
         currentZoom = 1;
-        centerImage(); // 이미지 뜨면 화면 정중앙으로 좌표 계산
+        translateX = 0;
+        translateY = 0;
+        updateTransform();
     };
+    
     img.onerror = () => { if (img.src.includes('.png')) img.src = img.src.replace('.png', '.PNG'); };
 }
 
-// 화면 한가운데로 이미지 좌표 강제 이동
-function centerImage() {
-    const wrapper = document.getElementById('imageWrapper');
-    const img = document.getElementById('planImage');
-    
-    translateX = (wrapper.clientWidth - (img.clientWidth * currentZoom)) / 2;
-    translateY = (wrapper.clientHeight - (img.clientHeight * currentZoom)) / 2;
-    
-    updateTransform();
-}
-
-// 실제 화면에 좌표와 확대 배율 적용
 function updateTransform() {
     const img = document.getElementById('planImage');
     img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentZoom})`;
 }
 
-// --- 드래그 이벤트 (좌표계 방식) ---
+// --- 완벽한 드래그 로직 ---
 const wrapper = document.getElementById('imageWrapper');
+const img = document.getElementById('planImage');
+
+img.addEventListener('dragstart', (e) => e.preventDefault());
 
 wrapper.addEventListener('mousedown', (e) => {
     isDragging = true;
     wrapper.style.cursor = 'grabbing';
+    // 드래그할 때는 부드러운 애니메이션 효과를 꺼서 마우스에 즉각 반응하게 함
+    img.style.transition = 'none'; 
+    
     startX = e.clientX - translateX;
     startY = e.clientY - translateY;
 });
 
 window.addEventListener('mouseup', () => {
-    isDragging = false;
-    wrapper.style.cursor = 'grab';
+    if (isDragging) {
+        isDragging = false;
+        wrapper.style.cursor = 'grab';
+        // 드래그 끝나면 확대/축소를 위해 애니메이션 다시 켬
+        img.style.transition = 'transform 0.2s ease-out';
+    }
 });
 
 wrapper.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
     e.preventDefault();
-    // 마우스가 이동한 만큼 좌표 최신화
+    
     translateX = e.clientX - startX;
     translateY = e.clientY - startY;
     updateTransform();
 });
 
-// 확대/축소 시 화면 중앙을 유지하며 커지도록 계산
-function zoom(delta) {
-    const wrapper = document.getElementById('imageWrapper');
-    const newZoom = Math.max(0.2, currentZoom + delta);
-
-    const centerX = wrapper.clientWidth / 2;
-    const centerY = wrapper.clientHeight / 2;
-
-    translateX = centerX - ((centerX - translateX) * (newZoom / currentZoom));
-    translateY = centerY - ((centerY - translateY) * (newZoom / currentZoom));
-
-    currentZoom = newZoom;
-    updateTransform();
-}
-
-document.getElementById('zoomIn').onclick = () => zoom(0.3);
-document.getElementById('zoomOut').onclick = () => zoom(-0.3);
-document.getElementById('resetZoom').onclick = () => { currentZoom = 1; centerImage(); };
+// 확대/축소
+document.getElementById('zoomIn').onclick = () => { 
+    currentZoom += 0.3; 
+    updateTransform(); 
+};
+document.getElementById('zoomOut').onclick = () => { 
+    if (currentZoom > 0.4) { 
+        currentZoom -= 0.3; 
+        updateTransform(); 
+    } 
+};
+document.getElementById('resetZoom').onclick = () => { 
+    currentZoom = 1; 
+    translateX = 0; 
+    translateY = 0; 
+    updateTransform(); 
+};
 
 document.getElementById('searchBtn').onclick = performSearch;
 document.getElementById('searchInput').onkeypress = (e) => { if (e.key === 'Enter') performSearch(); };
