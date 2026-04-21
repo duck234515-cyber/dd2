@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>신성대학교 건축물 평면도 검색</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="logo">
+                <h1>신성대학교 <span>평면도 검색</span></h1>
+            </div>
+            <div class="search-section">
+                <div class="search-bar-container">
+                    <input type="text" id="searchInput" placeholder="예: 본관 201, 공학관 B1..." autocomplete="off">
+                    <button id="searchBtn">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M19 19L14.65 14.65M17 9C17 13.4183 13.4183 17 9 17C4.58172 17 1 13.4183 1 9C1 4.58172 4.58172 1 9 1C13.4183 1 17 4.58172 17 9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <div id="suggestions" class="suggestions-list"></div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div id="resultInfo" class="result-info hidden">
+                <h2 id="buildingTitle">본관</h2>
+                <p id="floorInfo">3층 (Page 3)</p>
+            </div>
+
+            <div class="viewer-container">
+                <div id="placeholder" class="placeholder-msg">
+                    <div class="icon">🔍</div>
+                    <p>찾고자 하는 건물명이나 호실을 입력해 주세요.</p>
+                </div>
+                <div id="error" class="error-msg hidden">
+                    <div class="icon">⚠️</div>
+                    <p id="errorText">검색 결과가 없습니다.</p>
+                </div>
+                <div id="viewer" class="plan-viewer hidden">
+                    <div class="zoom-controls">
+                        <button id="zoomIn">+</button>
+                        <button id="zoomOut">-</button>
+                        <button id="resetZoom">Reset</button>
+                    </div>
+                    <div class="image-wrapper" id="imageWrapper">
+                        <img id="planImage" src="" alt="Floor Plan">
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 신성대학교 총무처. All rights reserved.</p>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
