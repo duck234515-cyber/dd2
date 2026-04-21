@@ -1,7 +1,11 @@
 let buildingData = null;
 let currentZoom = 1;
+
+// 구글 지도식 좌표 변수
+let translateX = 0;
+let translateY = 0;
 let isDragging = false;
-let startX, startY, scrollLeft, scrollTop;
+let startX, startY;
 
 async function loadData() {
     try {
@@ -32,8 +36,8 @@ function performSearch() {
     }
 
     if (!pageId) {
-        const sortedBuildings = [...buildingData.buildings].sort((a, b) => b.name.length - a.name.length);
-        for (const b of sortedBuildings) {
+        const sorted = [...buildingData.buildings].sort((a, b) => b.name.length - a.name.length);
+        for (const b of sorted) {
             if (query.includes(b.name.toUpperCase()) || query.includes(b.code.toUpperCase())) {
                 targetBuilding = b; break;
             }
@@ -71,57 +75,71 @@ function displayMap(building, floor, pageId) {
     
     img.onload = () => {
         currentZoom = 1;
-        updateZoom();
-        centerImage(); 
+        centerImage(); // 이미지 뜨면 화면 정중앙으로 좌표 계산
     };
     img.onerror = () => { if (img.src.includes('.png')) img.src = img.src.replace('.png', '.PNG'); };
 }
 
-// 1000px 여백을 고려한 완벽한 중앙 정렬 계산식
+// 화면 한가운데로 이미지 좌표 강제 이동
 function centerImage() {
     const wrapper = document.getElementById('imageWrapper');
     const img = document.getElementById('planImage');
     
-    // margin 1000px + 이미지 절반 크기 - 뷰어 박스 절반 크기
-    const targetLeft = 1000 + (img.clientWidth / 2) - (wrapper.clientWidth / 2);
-    const targetTop = 1000 + (img.clientHeight / 2) - (wrapper.clientHeight / 2);
+    translateX = (wrapper.clientWidth - (img.clientWidth * currentZoom)) / 2;
+    translateY = (wrapper.clientHeight - (img.clientHeight * currentZoom)) / 2;
     
-    wrapper.scrollLeft = targetLeft;
-    wrapper.scrollTop = targetTop;
+    updateTransform();
 }
 
+// 실제 화면에 좌표와 확대 배율 적용
+function updateTransform() {
+    const img = document.getElementById('planImage');
+    img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentZoom})`;
+}
+
+// --- 드래그 이벤트 (좌표계 방식) ---
 const wrapper = document.getElementById('imageWrapper');
-const imgElement = document.getElementById('planImage');
-imgElement.addEventListener('dragstart', (e) => e.preventDefault());
 
 wrapper.addEventListener('mousedown', (e) => {
     isDragging = true;
     wrapper.style.cursor = 'grabbing';
-    startX = e.pageX - wrapper.offsetLeft;
-    startY = e.pageY - wrapper.offsetTop;
-    scrollLeft = wrapper.scrollLeft;
-    scrollTop = wrapper.scrollTop;
+    startX = e.clientX - translateX;
+    startY = e.clientY - translateY;
 });
 
-window.addEventListener('mouseup', () => { isDragging = false; wrapper.style.cursor = 'grab'; });
+window.addEventListener('mouseup', () => {
+    isDragging = false;
+    wrapper.style.cursor = 'grab';
+});
 
 wrapper.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
     e.preventDefault();
-    const x = e.pageX - wrapper.offsetLeft;
-    const y = e.pageY - wrapper.offsetTop;
-    wrapper.scrollLeft = scrollLeft - (x - startX) * 1.5;
-    wrapper.scrollTop = scrollTop - (y - startY) * 1.5;
+    // 마우스가 이동한 만큼 좌표 최신화
+    translateX = e.clientX - startX;
+    translateY = e.clientY - startY;
+    updateTransform();
 });
 
-function updateZoom() {
-    const img = document.getElementById('planImage');
-    img.style.transform = `scale(${currentZoom})`;
+// 확대/축소 시 화면 중앙을 유지하며 커지도록 계산
+function zoom(delta) {
+    const wrapper = document.getElementById('imageWrapper');
+    const newZoom = Math.max(0.2, currentZoom + delta);
+
+    const centerX = wrapper.clientWidth / 2;
+    const centerY = wrapper.clientHeight / 2;
+
+    translateX = centerX - ((centerX - translateX) * (newZoom / currentZoom));
+    translateY = centerY - ((centerY - translateY) * (newZoom / currentZoom));
+
+    currentZoom = newZoom;
+    updateTransform();
 }
 
-document.getElementById('zoomIn').onclick = () => { currentZoom += 0.3; updateZoom(); };
-document.getElementById('zoomOut').onclick = () => { if (currentZoom > 0.4) { currentZoom -= 0.3; updateZoom(); } };
-document.getElementById('resetZoom').onclick = () => { currentZoom = 1; updateZoom(); centerImage(); };
+document.getElementById('zoomIn').onclick = () => zoom(0.3);
+document.getElementById('zoomOut').onclick = () => zoom(-0.3);
+document.getElementById('resetZoom').onclick = () => { currentZoom = 1; centerImage(); };
+
 document.getElementById('searchBtn').onclick = performSearch;
 document.getElementById('searchInput').onkeypress = (e) => { if (e.key === 'Enter') performSearch(); };
 
