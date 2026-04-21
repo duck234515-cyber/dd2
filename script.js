@@ -1,7 +1,7 @@
 let buildingData = null;
 let currentZoom = 1;
 
-// 드래그 상태 관리 변수
+// 드래그 상태 관리
 let isDragging = false;
 let startX, startY;
 let scrollLeft, scrollTop;
@@ -23,7 +23,7 @@ function performSearch() {
     let targetFloor = null;
     let pageId = null;
 
-    // 1. 키워드 우선 검색
+    // 1. 키워드 검색
     for (const b of buildingData.buildings) {
         for (const fNum in b.floors) {
             const fInfo = b.floors[fNum];
@@ -38,10 +38,10 @@ function performSearch() {
         if (pageId) break;
     }
 
-    // 2. 건물명/층 기반 검색
+    // 2. 기본 건물/층 검색
     if (!pageId) {
-        const sortedBuildings = [...buildingData.buildings].sort((a, b) => b.name.length - a.name.length);
-        for (const b of sortedBuildings) {
+        const sorted = [...buildingData.buildings].sort((a, b) => b.name.length - a.name.length);
+        for (const b of sorted) {
             if (query.includes(b.name.toUpperCase()) || query.includes(b.code.toUpperCase())) {
                 targetBuilding = b;
                 break;
@@ -59,9 +59,8 @@ function performSearch() {
             else if (roomMatch) {
                 const rNum = roomMatch[1];
                 targetFloor = rNum.length === 3 ? rNum[0] : rNum.substring(0, 2);
-            } else {
-                targetFloor = "1";
-            }
+            } else targetFloor = "1";
+
             const fInfo = targetBuilding.floors[targetFloor];
             if (fInfo) pageId = typeof fInfo === 'object' ? fInfo.page : fInfo;
         }
@@ -70,13 +69,12 @@ function performSearch() {
     if (targetBuilding && pageId) {
         displayMap(targetBuilding, targetFloor, pageId);
     } else {
-        showError("검색 결과가 없습니다. 건물명이나 주요 시설명을 입력해 주세요.");
+        alert("검색 결과가 없습니다.");
     }
 }
 
 function displayMap(building, floor, pageId) {
     document.getElementById('placeholder').classList.add('hidden');
-    document.getElementById('error').classList.add('hidden');
     document.getElementById('viewer').classList.remove('hidden');
     document.getElementById('resultInfo').classList.remove('hidden');
     
@@ -86,71 +84,57 @@ function displayMap(building, floor, pageId) {
     const img = document.getElementById('planImage');
     img.src = `assets/plans/page_${pageId}.png`;
     
-    img.onerror = () => {
-        img.src = img.src.replace('.png', '.PNG');
+    img.onload = () => {
+        currentZoom = 1;
+        updateZoom();
+        centerImage();
     };
-    
-    currentZoom = 1;
-    updateZoom();
-    
-    const wrapper = document.getElementById('imageWrapper');
-    wrapper.scrollTo(0, 0);
+
+    img.onerror = () => {
+        if (img.src.includes('.png')) img.src = img.src.replace('.png', '.PNG');
+    };
 }
 
-// --- 드래그 이동 로직 (보완 버전) ---
+// 이미지 중앙 정렬
+function centerImage() {
+    const wrapper = document.getElementById('imageWrapper');
+    const img = document.getElementById('planImage');
+    wrapper.scrollLeft = (img.scrollWidth - wrapper.clientWidth) / 2;
+    wrapper.scrollTop = (img.scrollHeight - wrapper.clientHeight) / 2;
+}
+
+// --- 드래그 로직 ---
 const wrapper = document.getElementById('imageWrapper');
 const img = document.getElementById('planImage');
 
-// 이미지 자체가 드래그되는 기본 현상 방지
 img.addEventListener('dragstart', (e) => e.preventDefault());
 
 wrapper.addEventListener('mousedown', (e) => {
     isDragging = true;
-    wrapper.style.cursor = 'grabbing';
-    // 클릭한 지점 기록
     startX = e.pageX - wrapper.offsetLeft;
     startY = e.pageY - wrapper.offsetTop;
-    // 현재 스크롤 위치 기록
     scrollLeft = wrapper.scrollLeft;
     scrollTop = wrapper.scrollTop;
 });
 
-window.addEventListener('mouseup', () => {
-    isDragging = false;
-    wrapper.style.cursor = 'grab';
-});
+window.addEventListener('mouseup', () => { isDragging = false; });
 
 wrapper.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
     e.preventDefault();
-    
-    // 마우스가 움직인 거리 계산
     const x = e.pageX - wrapper.offsetLeft;
     const y = e.pageY - wrapper.offsetTop;
-    const walkX = (x - startX) * 1.5; // 민감도 조절
-    const walkY = (y - startY) * 1.5;
-    
-    wrapper.scrollLeft = scrollLeft - walkX;
-    wrapper.scrollTop = scrollTop - walkY;
+    wrapper.scrollLeft = scrollLeft - (x - startX) * 1.5;
+    wrapper.scrollTop = scrollTop - (y - startY) * 1.5;
 });
 
-function showError(msg) {
-    document.getElementById('placeholder').classList.add('hidden');
-    document.getElementById('viewer').classList.add('hidden');
-    document.getElementById('resultInfo').classList.add('hidden');
-    const errorDiv = document.getElementById('error');
-    errorDiv.classList.remove('hidden');
-    document.getElementById('errorText').innerText = msg;
-}
-
 function updateZoom() {
-    const img = document.getElementById('planImage');
     img.style.transform = `scale(${currentZoom})`;
 }
 
 document.getElementById('zoomIn').onclick = () => { currentZoom += 0.3; updateZoom(); };
 document.getElementById('zoomOut').onclick = () => { if (currentZoom > 0.4) { currentZoom -= 0.3; updateZoom(); } };
-document.getElementById('resetZoom').onclick = () => { currentZoom = 1; updateZoom(); };
+document.getElementById('resetZoom').onclick = () => { currentZoom = 1; updateZoom(); centerImage(); };
 
 document.getElementById('searchBtn').onclick = performSearch;
 document.getElementById('searchInput').onkeypress = (e) => { if (e.key === 'Enter') performSearch(); };
