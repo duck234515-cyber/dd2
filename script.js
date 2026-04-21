@@ -26,7 +26,7 @@ function performSearch() {
     let targetFloor = null;
     let pageId = null;
 
-    // 1. 키워드 우선 검색 (예: '총무처' 입력 시 해당 층 바로 찾기)
+    // 1. 키워드 우선 검색 (keywords 배열 내 일치 여부 확인)
     for (const b of buildingData.buildings) {
         for (const fNum in b.floors) {
             const fInfo = b.floors[fNum];
@@ -79,9 +79,9 @@ function performSearch() {
     }
 }
 
+// 지도 표시 및 중앙 정렬 로직
 function displayMap(building, floor, pageId) {
     document.getElementById('placeholder').classList.add('hidden');
-    document.getElementById('error').classList.add('hidden');
     document.getElementById('viewer').classList.remove('hidden');
     document.getElementById('resultInfo').classList.remove('hidden');
     
@@ -94,11 +94,7 @@ function displayMap(building, floor, pageId) {
     img.onload = () => {
         currentZoom = 1;
         updateZoom();
-        
-        const wrapper = document.getElementById('imageWrapper');
-        // CSS의 margin 800px 설정을 고려하여 이미지가 중앙에 오도록 초기 위치 조정
-        wrapper.scrollTop = 800; 
-        wrapper.scrollLeft = (img.scrollWidth - wrapper.clientWidth) / 2;
+        centerImage(); // 이미지가 로드된 후 중앙 정렬 호출
     };
 
     img.onerror = () => {
@@ -106,16 +102,25 @@ function displayMap(building, floor, pageId) {
     };
 }
 
+// 뷰어 내에서 이미지 정중앙 배치
+function centerImage() {
+    const wrapper = document.getElementById('imageWrapper');
+    const img = document.getElementById('planImage');
+    wrapper.scrollLeft = (img.scrollWidth - wrapper.clientWidth) / 2;
+    wrapper.scrollTop = (img.scrollHeight - wrapper.clientHeight) / 2;
+}
+
 // --- 드래그 이동 로직 ---
 const wrapper = document.getElementById('imageWrapper');
 const imgElement = document.getElementById('planImage');
 
-// 이미지 자체 드래그 방지
+// 이미지 자체 드래그 방지 (브라우저 기본 기능 차단)
 imgElement.addEventListener('dragstart', (e) => e.preventDefault());
 
 wrapper.addEventListener('mousedown', (e) => {
     isDragging = true;
     wrapper.style.cursor = 'grabbing';
+    // 클릭 시 마우스 좌표와 현재 스크롤 위치 기록
     startX = e.pageX - wrapper.offsetLeft;
     startY = e.pageY - wrapper.offsetTop;
     scrollLeft = wrapper.scrollLeft;
@@ -130,12 +135,14 @@ window.addEventListener('mouseup', () => {
 wrapper.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
     e.preventDefault();
+    
+    // 마우스 이동 거리 계산
     const x = e.pageX - wrapper.offsetLeft;
     const y = e.pageY - wrapper.offsetTop;
     
-    // 이동 속도(민감도) 조절: 2.0배
-    const walkX = (x - startX) * 2;
-    const walkY = (y - startY) * 2;
+    // 이동 민감도 설정 (1.5 ~ 2.0 권장)
+    const walkX = (x - startX) * 1.5;
+    const walkY = (y - startY) * 1.5;
     
     wrapper.scrollLeft = scrollLeft - walkX;
     wrapper.scrollTop = scrollTop - walkY;
@@ -146,15 +153,26 @@ function updateZoom() {
     img.style.transform = `scale(${currentZoom})`;
 }
 
-document.getElementById('zoomIn').onclick = () => { currentZoom += 0.3; updateZoom(); };
-document.getElementById('zoomOut').onclick = () => { if (currentZoom > 0.3) { currentZoom -= 0.3; updateZoom(); } };
+// 줌 컨트롤 이벤트 바인딩
+document.getElementById('zoomIn').onclick = () => { 
+    currentZoom += 0.3; 
+    updateZoom(); 
+};
+document.getElementById('zoomOut').onclick = () => { 
+    if (currentZoom > 0.4) { 
+        currentZoom -= 0.3; 
+        updateZoom(); 
+    } 
+};
 document.getElementById('resetZoom').onclick = () => { 
     currentZoom = 1; 
     updateZoom(); 
-    wrapper.scrollTop = 800; // 리셋 시 다시 상하 여백 중앙으로
+    centerImage(); 
 };
 
+// 검색 이벤트 바인딩
 document.getElementById('searchBtn').onclick = performSearch;
 document.getElementById('searchInput').onkeypress = (e) => { if (e.key === 'Enter') performSearch(); };
 
+// 데이터 로드 시작
 loadData();
