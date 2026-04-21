@@ -3,7 +3,7 @@
     --secondary: #00A6CE;
     --accent: #FFD700;
     --bg: #f0f2f5;
-    --surface: rgba(255, 255, 255, 0.95);
+    --surface: rgba(255, 255, 255, 0.98);
     --text: #1a202c;
     --text-muted: #718096;
     --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
@@ -36,7 +36,6 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
@@ -72,12 +71,6 @@ header {
     border-radius: 12px;
     padding: 4px;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
-}
-
-.search-bar-container:focus-within {
-    background: white;
-    box-shadow: 0 0 0 3px rgba(0, 166, 206, 0.4);
 }
 
 .search-bar-container input {
@@ -85,13 +78,13 @@ header {
     background: transparent;
     border: none;
     padding: 12px 16px;
-    color: inherit;
+    color: white;
     font-size: 16px;
     outline: none;
 }
 
-.search-bar-container:focus-within input {
-    color: var(--text);
+.search-bar-container input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
 }
 
 .search-bar-container button {
@@ -101,46 +94,53 @@ header {
     color: white;
     padding: 0 16px;
     cursor: pointer;
+    transition: background 0.2s;
+}
+
+.search-bar-container button:hover {
+    background: #008eb0;
 }
 
 main {
     flex: 1;
-    padding: 40px;
-    overflow: hidden; 
+    padding: 30px 40px;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .result-info {
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
 .result-info h2 {
-    font-size: 32px;
+    font-size: 28px;
     color: var(--primary);
 }
 
 .result-info p {
     color: var(--text-muted);
-    font-size: 18px;
+    font-size: 16px;
 }
 
-/* 뷰어 영역: 스크롤바를 숨기고 드래그 공간 확보 */
+/* 뷰어 핵심 설정 */
 .viewer-container {
     flex: 1;
-    background: #fdfdfd;
+    background: #f8fafc;
     border-radius: 16px;
     border: 2px dashed #e2e8f0;
     position: relative;
-    overflow: hidden;
+    overflow: hidden; /* 스크롤바 숨김 */
 }
 
 .image-wrapper {
     width: 100%;
     height: 100%;
-    overflow: hidden; /* 스크롤바 제거 */
+    overflow: hidden; /* 드래그로만 이동 가능하게 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
     cursor: grab;
-    display: block; /* 중앙 정렬 해제 (자유 이동을 위해) */
     position: relative;
 }
 
@@ -150,14 +150,22 @@ main {
 
 #planImage {
     display: block;
-    /* 상하좌우 800px의 거대한 여백을 주어 이미지가 박스 밖으로 무한히 나갈 수 있게 함 */
-    margin: 800px auto; 
-    max-width: none;
+    max-width: none; /* 확대 시 제한 해제 */
     max-height: none;
+    transform-origin: center;
     transition: transform 0.2s ease-out;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
     user-select: none;
     -webkit-user-drag: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.placeholder-msg, .error-msg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: var(--text-muted);
 }
 
 .zoom-controls {
@@ -170,12 +178,13 @@ main {
 }
 
 .zoom-controls button {
-    padding: 10px 16px;
+    width: 44px;
+    height: 44px;
     border-radius: 10px;
     border: none;
     background: white;
     color: var(--primary);
-    font-size: 14px;
+    font-size: 18px;
     font-weight: bold;
     box-shadow: var(--shadow);
     cursor: pointer;
@@ -195,6 +204,4 @@ footer {
     border-top: 1px solid #edf2f7;
 }
 
-.hidden {
-    display: none !important;
-}
+.hidden { display: none !important; }
