@@ -23,10 +23,11 @@ function performSearch() {
     let targetFloor = null;
     let pageId = null;
 
+    // 1. 키워드 우선 검색
     for (const b of buildingData.buildings) {
         for (const fNum in b.floors) {
             const fInfo = b.floors[fNum];
-            const keywords = fInfo.keywords || [];
+            const keywords = (fInfo && fInfo.keywords) ? fInfo.keywords : [];
             if (keywords.some(k => query.includes(k.toUpperCase()))) {
                 targetBuilding = b;
                 targetFloor = fNum;
@@ -37,6 +38,7 @@ function performSearch() {
         if (pageId) break;
     }
 
+    // 2. 건물명/층 기반 검색
     if (!pageId) {
         const sortedBuildings = [...buildingData.buildings].sort((a, b) => b.name.length - a.name.length);
         for (const b of sortedBuildings) {
@@ -90,39 +92,44 @@ function displayMap(building, floor, pageId) {
     
     currentZoom = 1;
     updateZoom();
-    // 이미지 로드 후 스크롤 위치 중앙 정렬
+    
     const wrapper = document.getElementById('imageWrapper');
-    wrapper.scrollLeft = 0;
-    wrapper.scrollTop = 0;
+    wrapper.scrollTo(0, 0);
 }
 
-// 드래그 이동 로직 추가
+// --- 드래그 이동 로직 (보완 버전) ---
 const wrapper = document.getElementById('imageWrapper');
+const img = document.getElementById('planImage');
+
+// 이미지 자체가 드래그되는 기본 현상 방지
+img.addEventListener('dragstart', (e) => e.preventDefault());
 
 wrapper.addEventListener('mousedown', (e) => {
     isDragging = true;
-    wrapper.classList.add('active'); // 커서 모양 변경용
+    wrapper.style.cursor = 'grabbing';
+    // 클릭한 지점 기록
     startX = e.pageX - wrapper.offsetLeft;
     startY = e.pageY - wrapper.offsetTop;
+    // 현재 스크롤 위치 기록
     scrollLeft = wrapper.scrollLeft;
     scrollTop = wrapper.scrollTop;
 });
 
-wrapper.addEventListener('mouseleave', () => {
+window.addEventListener('mouseup', () => {
     isDragging = false;
-});
-
-wrapper.addEventListener('mouseup', () => {
-    isDragging = false;
+    wrapper.style.cursor = 'grab';
 });
 
 wrapper.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
     e.preventDefault();
+    
+    // 마우스가 움직인 거리 계산
     const x = e.pageX - wrapper.offsetLeft;
     const y = e.pageY - wrapper.offsetTop;
-    const walkX = (x - startX) * 2; // 이동 속도 조절
-    const walkY = (y - startY) * 2;
+    const walkX = (x - startX) * 1.5; // 민감도 조절
+    const walkY = (y - startY) * 1.5;
+    
     wrapper.scrollLeft = scrollLeft - walkX;
     wrapper.scrollTop = scrollTop - walkY;
 });
