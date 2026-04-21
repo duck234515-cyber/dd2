@@ -1,7 +1,6 @@
 :root {
     --primary: #003366;
     --secondary: #00A6CE;
-    --accent: #FFD700;
     --bg: #f0f2f5;
     --surface: rgba(255, 255, 255, 0.98);
     --text: #1a202c;
@@ -9,11 +8,7 @@
     --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
     font-family: 'Pretendard', sans-serif;
@@ -48,21 +43,10 @@ header {
     align-items: center;
 }
 
-.logo h1 {
-    font-size: 24px;
-    font-weight: 700;
-}
+.logo h1 { font-size: 24px; font-weight: 700; }
+.logo span { font-weight: 400; opacity: 0.8; font-size: 18px; margin-left: 8px; }
 
-.logo span {
-    font-weight: 400;
-    opacity: 0.8;
-    font-size: 18px;
-    margin-left: 8px;
-}
-
-.search-section {
-    flex: 0 0 400px;
-}
+.search-section { flex: 0 0 400px; }
 
 .search-bar-container {
     position: relative;
@@ -83,10 +67,6 @@ header {
     outline: none;
 }
 
-.search-bar-container input::placeholder {
-    color: rgba(255, 255, 255, 0.6);
-}
-
 .search-bar-container button {
     background: var(--secondary);
     border: none;
@@ -94,11 +74,6 @@ header {
     color: white;
     padding: 0 16px;
     cursor: pointer;
-    transition: background 0.2s;
-}
-
-.search-bar-container button:hover {
-    background: #008eb0;
 }
 
 main {
@@ -109,19 +84,9 @@ main {
     overflow: hidden;
 }
 
-.result-info {
-    margin-bottom: 20px;
-}
-
-.result-info h2 {
-    font-size: 28px;
-    color: var(--primary);
-}
-
-.result-info p {
-    color: var(--text-muted);
-    font-size: 16px;
-}
+.result-info { margin-bottom: 20px; }
+.result-info h2 { font-size: 28px; color: var(--primary); }
+.result-info p { color: var(--text-muted); font-size: 16px; }
 
 /* 뷰어 핵심 설정 */
 .viewer-container {
@@ -130,42 +95,32 @@ main {
     border-radius: 16px;
     border: 2px dashed #e2e8f0;
     position: relative;
-    overflow: hidden; /* 스크롤바 숨김 */
+    overflow: hidden;
 }
 
+/* Flexbox 제거, block으로 변경 */
 .image-wrapper {
     width: 100%;
     height: 100%;
-    overflow: hidden; /* 드래그로만 이동 가능하게 */
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    overflow: hidden; 
     cursor: grab;
+    display: block; 
     position: relative;
 }
 
-.image-wrapper:active {
-    cursor: grabbing;
-}
+.image-wrapper:active { cursor: grabbing; }
 
 #planImage {
     display: block;
-    max-width: none; /* 확대 시 제한 해제 */
+    /* 핵심 해결책: 사방에 1000px의 여백을 줘서 이동 공간 무한 확보 */
+    margin: 1000px; 
+    max-width: none;
     max-height: none;
     transform-origin: center;
     transition: transform 0.2s ease-out;
     user-select: none;
     -webkit-user-drag: none;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-}
-
-.placeholder-msg, .error-msg {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    color: var(--text-muted);
 }
 
 .zoom-controls {
@@ -188,20 +143,6 @@ main {
     font-weight: bold;
     box-shadow: var(--shadow);
     cursor: pointer;
-    transition: all 0.2s;
-}
-
-.zoom-controls button:hover {
-    background: var(--primary);
-    color: white;
-}
-
-footer {
-    padding: 16px;
-    text-align: center;
-    font-size: 14px;
-    color: var(--text-muted);
-    border-top: 1px solid #edf2f7;
 }
 
 .hidden { display: none !important; }
